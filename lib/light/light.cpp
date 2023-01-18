@@ -3,10 +3,10 @@
 
 using namespace std;
 
-unsigned int headlightOCR1B = 40000;  // lysstyrke for forlys
-unsigned int taillightOCR1A = 14500;  // lysstyrke for baglys
-unsigned int brakelightOCR1A = 65534; // lysstyrke for bremselys
-unsigned int TOP = 65535;
+const unsigned int headlightOCR1B = 65534;  // lysstyrke for forlys
+const unsigned int taillightOCR1A = 14500;  // lysstyrke for baglys
+const unsigned int brakelightOCR1A = 65534; // lysstyrke for bremselys
+const unsigned int TOP = 65535;
 
 Light::Light()
 {
