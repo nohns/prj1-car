@@ -26,8 +26,9 @@
 
 void waitForStartPress();
 void initSensors();
-
-/************************************************************************/
+void onReflexEncountered();
+void disableExternalInterrupts();
+void enableExternalInterrupts();
 
 // Variable for storing pointer to driving control
 DrivingControl *drivingControlPtr;
@@ -57,9 +58,10 @@ int main(void)
     SendString("Starting to drive...\n");
     drivingControlPtr->start();
 
-    // Init sensors
+    // Init sensors on side of car
     initSensors();
 
+    // Wait for reflexes to be encountered
     while (1)
     {
     }
@@ -94,35 +96,16 @@ void initSensors()
     EIMSK |= 0b00001100; // Enable exernal interrupt INT2 (PD2) and INT3 (PD3)
 }
 
-#define MAX_INSTRUCTIONS_PER_REFLEX 5
-#define MAX_REFLEXES 14
-
-/*const char instructions[MAX_REFLEXES][MAX_INSTRUCTIONS_PER_REFLEX] = {
-    {
-        0,
-    }, // Reflex 1 - dont do anything
-    {1, 80},
-    {1, 0},
-    {1, 80},
-    {0},
-    {1, -70},
-    {0},
-    {1, 70},
-    {0},
-    {0},
-    {1, 0},
-    {1, 0},
-    {1, 0}};*/
-
-void disableExternalInterrupts()
+// Interrupt for reflex 1
+ISR(INT2_vect)
 {
-    EIMSK &= ~((1 << INT2) | (1 << INT3)); // Disable external interrupt INT2 (PD2) and INT3 (PD3)
-    EIFR |= ((1 << INTF2) | (1 << INTF3)); // Clear interrupt flag INTF2 and INTF3
+    onReflexEncountered();
 }
 
-void enableExternalInterrupts()
+// Interrupt for reflex 2
+ISR(INT3_vect)
 {
-    EIMSK |= ((1 << INT2) | (1 << INT3)); // Enable external interrupt INT2 (PD2)
+    onReflexEncountered();
 }
 
 void onReflexEncountered()
@@ -137,55 +120,17 @@ void onReflexEncountered()
     enableExternalInterrupts();
 }
 
-ISR(INT2_vect)
+// Disables external interrupts INT2 and INT3 for sensors on the side of the car
+void disableExternalInterrupts()
 {
-    onReflexEncountered();
-
-    /*const char *reflexInstructions = instructions[reflexesEncountered];
-    SendString("Running reflex instruction ");
-    SendInteger(reflexesEncountered);
-    SendString("...\n");
-
-    DDRB |= (1 << PB7);
-    PORTB |= (1 << PB7);
-
-    char numberOfInstructions = reflexInstructions[0];
-    for (char i = 1; i <= numberOfInstructions; i++)
-    {
-        char instruction = reflexInstructions[i];
-
-        SendString("Instruction value is ");
-        SendInteger(instruction);
-        SendChar('\n');
-
-        if (instruction == 0)
-        {
-            drivingControlPtr->brake();
-        }
-        else if (instruction > 0)
-        {
-            drivingControlPtr->drive(instruction);
-        }
-        else
-        {
-            drivingControlPtr->reverse(-instruction);
-        }
-    }
-
-    // Make delay so we dont get multiple fires
-    if (numberOfInstructions == 0)
-    {
-        _delay_ms(300);
-    }
-    else
-    {
-        _delay_ms(125);
-    }*/
+    EIMSK &= ~((1 << INT2) | (1 << INT3)); // Disable external interrupt INT2 (PD2) and INT3 (PD3)
+    EIFR |= ((1 << INTF2) | (1 << INTF3)); // Clear interrupt flag INTF2 and INTF3
 }
 
-ISR(INT3_vect)
+// Enables external interrupts INT2 and INT3 for sensors on the side of the car
+void enableExternalInterrupts()
 {
-    onReflexEncountered();
+    EIMSK |= ((1 << INT2) | (1 << INT3)); // Enable external interrupt INT2 (PD2)
 }
 
 /* ---------------------------------- */
