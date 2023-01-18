@@ -52,10 +52,6 @@ void Motor::accelerate(unsigned int toSpeed, unsigned char accelerationRate)
     // initAccelerationTimer();
     while (finalSpeed < toSpeed)
     {
-        // Wait for acceleration timer to fire
-        // waitForAccelerationTimer();
-        _delay_ms(75);
-
         // Increment speed
         finalSpeed += accelerationRate != 0 ? accelerationRate : MOTOR_ACCELERATION_PER_TICK;
         finalSpeed = finalSpeed > toSpeed ? toSpeed : finalSpeed;
@@ -65,6 +61,8 @@ void Motor::accelerate(unsigned int toSpeed, unsigned char accelerationRate)
 
         // Update pwm duty cycle
         writeDutyCycle(finalSpeed);
+
+        _delay_ms(75);
     }
 
     // stopAccelerationTimer();
