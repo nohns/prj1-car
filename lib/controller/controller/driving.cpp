@@ -17,39 +17,30 @@ void DrivingControl::start()
     lightDriverPtr_->turnOnTaillight();
 
     soundDriverPtr_->playSound(START_SOUND);
-    _delay_ms(2000);
+    _delay_ms(3000);
 
-    // Start with a speed of 70
+    // Start with a speed of 60
     drive(60);
 }
 
 void DrivingControl::handleReflex(unsigned char reflexNo)
 {
-    // On every reflex lower than the rest play sound
+    // On every reflex lower than the end reflex, then play sound
     if (reflexNo < 11)
     {
         soundDriverPtr_->playSound(REFLEX_SOUND);
     }
 
-    SendString("Reflex no: ");
-    SendInteger(reflexNo);
-    SendChar('\n');
-
-    /*lightDriverPtr_->turnOnTaillight();
-    _delay_ms(60);
-    lightDriverPtr_->turnOffTaillight();*/
-    _delay_ms(60);
-
     // Alle steder der er kommentar til en command, er den originale kode.
     switch (reflexNo)
     {
     case 0:
-        // If reflex is 0, then do nothing but wait a bit so reflex doesn't get triggered twice
+        // If reflex is 1, then decelerate slowly
         _delay_ms(200);
         drive(40, 5);
         break;
     case 1:
-        // If reflex is 2, then slow down
+        // If reflex is 2, then decelerate a little faster and then wait a bit, then accelerate up the ramp
         lightDriverPtr_->engageBrakeLight();
         drive(20, 10);
         lightDriverPtr_->disengageBrakeLight();
@@ -58,7 +49,8 @@ void DrivingControl::handleReflex(unsigned char reflexNo)
 
         break;
     case 2:
-        // If reflex is 3 then drive with a speed of 80 after the ramp
+        // If reflex is 3, then try to brake the car, but also reverse when it is driving down the ramp
+        // Afterwards, drive with a speed of 70
         lightDriverPtr_->engageBrakeLight();
         drive(0, 50);
         //_delay_ms(50);
@@ -69,16 +61,16 @@ void DrivingControl::handleReflex(unsigned char reflexNo)
         lightDriverPtr_->disengageBrakeLight();
         drive(70);
     case 3:
-        // If reflex is 3 then drive with a speed of 80 after the ramp
+        // If reflex is 3, then slow down a bit
         drive(60);
         _delay_ms(200);
         break;
     case 4:
-        drive(60);
+        // If reflex is 4, then just continue driving
         _delay_ms(100);
         break;
     case 5:
-        // If reflex is 5, then brake and afterwards reverse with a speed of 70
+        // If reflex is 5, then brake fast and afterwards reverse with a speed of 50
         lightDriverPtr_->engageBrakeLight();
         drive(0, 60);
         _delay_ms(200);
@@ -87,12 +79,12 @@ void DrivingControl::handleReflex(unsigned char reflexNo)
         reverse(50);
         break;
     case 6:
-        // If reflex is 6, then do nothing but wait a bit so reflex doesn't get triggered twice
+        // If reflex is 6, then slow down to be ready for breaking
         reverse(30, 5);
         _delay_ms(50);
         break;
     case 7:
-        // If reflex is 7, then drive with a speed of 70
+        // If reflex is 7, then decelerate car to a halt and then drive with a speed of 70
         lightDriverPtr_->engageBrakeLight();
         reverse(0, 30);
         _delay_ms(300);
@@ -118,10 +110,6 @@ void DrivingControl::handleReflex(unsigned char reflexNo)
         drive(0);
         break;
     }
-
-    /*lightDriverPtr_->turnOnHeadlight();
-    _delay_ms(50);
-    lightDriverPtr_->turnOffHeadlight();*/
 }
 
 void DrivingControl::end()
@@ -154,11 +142,6 @@ void DrivingControl::drive(unsigned int speed, unsigned char accelerationRate)
     }
 
     // Accelerate/Decelerate the motor to speed
-    SendString("Driving to speed = ");
-    SendInteger(speed);
-    SendString(", motor speed = ");
-    SendInteger(motorDriverPtr_->getSpeed());
-    SendChar('\n');
     if (speed < motorDriverPtr_->getSpeed())
     {
         // If new speed is below how fast the car is currently driving, then decelerate
