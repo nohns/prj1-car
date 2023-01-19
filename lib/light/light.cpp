@@ -24,7 +24,7 @@ void Light::turnOnHeadlight()
     // Ingen prescaling
     TCCR1B |= (1 << CS10);
 
-    // Set OC1B as the output compare pin, OC1A = PB6, set PB6 s� forlys LED'erne lyser
+    // Set OC1B as the output compare pin, OC1A = PB6, set PB6 så forlys LED'erne lyser
     DDRB |= (1 << PB6);
     PORTB |= (1 << PB6);
 
@@ -47,7 +47,7 @@ void Light::turnOnTaillight()
     // Ingen prescaling
     TCCR1B |= (1 << CS10);
 
-    // Set OC1A as the output compare pin, OC1A = PB5, set PB5 s� baglys LED'erne lyser
+    // Set OC1A as the output compare pin, OC1A = PB5, set PB5 så baglys LED'erne lyser
     DDRB |= (1 << PB5);
     PORTB |= (1 << PB5);
 
@@ -60,7 +60,7 @@ void Light::turnOffTaillight()
 }
 void Light::engageBrakeLight()
 {
-    // Skriver h�jere duty cycle til baglys agerende som bremselys
+    // Skriver højere duty cycle til baglys agerende som bremselys
     OCR1A = brakelightOCR1A;
 }
 void Light::disengageBrakeLight()

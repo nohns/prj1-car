@@ -1,7 +1,6 @@
 #include "motor.h"
 #include <avr/io.h>
 #include <math.h>
-#include "uart.h"
 #include <util/delay.h>
 
 /* ----------------------------------- *
@@ -48,25 +47,17 @@ void Motor::accelerate(unsigned char toSpeed, unsigned char accelerationRate)
     }
 
     unsigned char finalSpeed = readDutyCycle();
-    SendString("Accelerating...\n");
-    // initAccelerationTimer();
     while (finalSpeed < toSpeed)
     {
         // Increment speed
         finalSpeed += accelerationRate != 0 ? accelerationRate : MOTOR_ACCELERATION_PER_TICK;
-        // finalSpeed += (accelerationRate != 0 ? accelerationRate : MOTOR_ACCELERATION_PER_TICK) / 2;
         finalSpeed = finalSpeed > toSpeed ? toSpeed : finalSpeed;
-        SendString("Writing new speed = ");
-        SendInteger(finalSpeed);
-        SendChar('\n');
 
         // Update pwm duty cycle
         writeDutyCycle(finalSpeed);
 
         _delay_ms(MOTOR_DEFAULT_ACCELERATION_TICK_MS);
     }
-
-    // stopAccelerationTimer();
 }
 
 void Motor::decelerate(unsigned char toSpeed, unsigned char accelerationRate)
@@ -77,22 +68,18 @@ void Motor::decelerate(unsigned char toSpeed, unsigned char accelerationRate)
         return;
     }
 
-    SendString("Decelerating...\n");
-
     unsigned char finalSpeed = readDutyCycle();
     while (finalSpeed > toSpeed)
     {
-
         // Decrement speed
         unsigned char accelerationTickrate = accelerationRate != 0 ? accelerationRate : MOTOR_DECELERATION_PER_TICK;
-        // unsigned char accelerationTickrate = (accelerationRate != 0 ? accelerationRate : MOTOR_DECELERATION_PER_TICK) / 2;
         finalSpeed = finalSpeed < accelerationTickrate ? 0 : finalSpeed - accelerationTickrate;
 
         // Update pwm duty cycle
         writeDutyCycle(finalSpeed);
 
         // Wait one tick
-        _delay_ms(75);
+        _delay_ms(MOTOR_DEFAULT_ACCELERATION_TICK_MS);
     }
 }
 
@@ -119,12 +106,6 @@ unsigned char Motor::readDutyCycle()
         return 0;
     }
     unsigned int dutyCycle = ((unsigned long)100 * OCR4A) / 1023;
-    // unsigned int dutyCycle = ((unsigned long)100 * OCR4A) / 511;
-    SendString("Read dutyCycle = ");
-    SendInteger(dutyCycle);
-    SendString(" and OCR4A = ");
-    SendInteger(OCR4A);
-    SendChar('\n');
 
     return dutyCycle;
 }
@@ -159,20 +140,14 @@ void Motor::writeDirection(char direction)
 void Motor::writeDutyCycle(const unsigned char dutyCycle)
 {
     // If duty cycle given is 0 then avoid dividing by 0
-    SendString("OCR4A = ");
     if (dutyCycle == 0)
     {
         OCR4A = 0;
-        SendInteger(OCR4A);
-        SendChar('\n');
         return;
     }
 
     unsigned long dutyCycleLong = (unsigned long)1023 * dutyCycle;
-    // unsigned long dutyCycleLong = (unsigned long)511 * dutyCycle;
     OCR4A = dutyCycleLong / 100;
-    SendInteger(OCR4A);
-    SendChar('\n');
 }
 
 char Motor::readDirection()

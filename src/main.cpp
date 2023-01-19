@@ -2,7 +2,6 @@
 #include <avr/interrupt.h>
 #include <util/delay.h>
 
-#include "uart.h"
 #include "sound.h"
 #include "motor.h"
 #include "light.h"
@@ -39,7 +38,6 @@ volatile unsigned int reflexesEncountered = 0;
 int main(void)
 {
     // Wait until start signal is given
-    SendString("wait for start...\n");
     waitForStartPress();
 
     // Initialize dependency tree (drivers)
@@ -53,7 +51,7 @@ int main(void)
     // Enable interrupts globally
     sei();
 
-    SendString("Starting to drive...\n");
+    // Start car
     drivingControlPtr->start();
 
     // Init sensors on side of car
@@ -77,10 +75,8 @@ void waitForStartPress()
     // Wait for start button down
     while ((START_BTN_PIN & pinMask) == 0)
     {
-        SendString(START_BTN_PIN & pinMask ? "1\n" : "0\n");
     }
 
-    SendString("DOWN now wating for up");
     // Wait for start button up, to complete press
     while (START_BTN_PIN & pinMask)
     {
