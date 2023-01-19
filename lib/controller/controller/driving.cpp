@@ -14,7 +14,7 @@ DrivingControl::DrivingControl(Motor *motorDriver, Sound *soundDriver, Light *li
 void DrivingControl::start()
 {
     lightDriverPtr_->turnOnHeadlight();
-    // lightDriverPtr_->turnOnTaillight();
+    lightDriverPtr_->turnOnTaillight();
 
     soundDriverPtr_->playSound(START_SOUND);
     _delay_ms(2000);
@@ -35,9 +35,10 @@ void DrivingControl::handleReflex(unsigned char reflexNo)
     SendInteger(reflexNo);
     SendChar('\n');
 
-    lightDriverPtr_->turnOnTaillight();
+    /*lightDriverPtr_->turnOnTaillight();
     _delay_ms(60);
-    lightDriverPtr_->turnOffTaillight();
+    lightDriverPtr_->turnOffTaillight();*/
+    _delay_ms(60);
 
     // Alle steder der er kommentar til en command, er den originale kode.
     switch (reflexNo)
@@ -49,17 +50,23 @@ void DrivingControl::handleReflex(unsigned char reflexNo)
         break;
     case 1:
         // If reflex is 2, then slow down
+        lightDriverPtr_->engageBrakeLight();
         drive(20, 10);
+        lightDriverPtr_->disengageBrakeLight();
         _delay_ms(175);
         drive(75, 15);
 
         break;
     case 2:
         // If reflex is 3 then drive with a speed of 80 after the ramp
+        lightDriverPtr_->engageBrakeLight();
         drive(0, 50);
         //_delay_ms(50);
         reverse(30, 30);
-        _delay_ms(1100);
+        _delay_ms(750);
+        reverse(0, 30);
+        _delay_ms(225);
+        lightDriverPtr_->disengageBrakeLight();
         drive(70);
     case 3:
         // If reflex is 3 then drive with a speed of 80 after the ramp
@@ -72,10 +79,10 @@ void DrivingControl::handleReflex(unsigned char reflexNo)
         break;
     case 5:
         // If reflex is 5, then brake and afterwards reverse with a speed of 70
-        // lightDriverPtr_->engageBrakeLight();
+        lightDriverPtr_->engageBrakeLight();
         drive(0, 60);
         _delay_ms(200);
-        // lightDriverPtr_->disengageBrakeLight();
+        lightDriverPtr_->disengageBrakeLight();
 
         reverse(50);
         break;
@@ -86,10 +93,10 @@ void DrivingControl::handleReflex(unsigned char reflexNo)
         break;
     case 7:
         // If reflex is 7, then drive with a speed of 70
-        // lightDriverPtr_->engageBrakeLight();
+        lightDriverPtr_->engageBrakeLight();
         reverse(0, 30);
         _delay_ms(300);
-        // lightDriverPtr_->disengageBrakeLight();
+        lightDriverPtr_->disengageBrakeLight();
 
         drive(70);
 
