@@ -31,7 +31,6 @@ void DrivingControl::handleReflex(unsigned char reflexNo)
         soundDriverPtr_->playSound(REFLEX_SOUND);
     }
 
-    // Alle steder der er kommentar til en command, er den originale kode.
     switch (reflexNo)
     {
     case 0:
