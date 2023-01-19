@@ -51,14 +51,14 @@ void DrivingControl::handleReflex(unsigned char reflexNo)
         // If reflex is 2, then slow down
         drive(20, 10);
         _delay_ms(175);
-        drive(70, 15);
+        drive(75, 15);
 
         break;
     case 2:
         // If reflex is 3 then drive with a speed of 80 after the ramp
         drive(0, 50);
         //_delay_ms(50);
-        reverse(20, 20);
+        reverse(30, 30);
         _delay_ms(1100);
         drive(70);
     case 3:
@@ -74,19 +74,20 @@ void DrivingControl::handleReflex(unsigned char reflexNo)
         // If reflex is 5, then brake and afterwards reverse with a speed of 70
         // lightDriverPtr_->engageBrakeLight();
         drive(0, 60);
-        _delay_ms(300);
+        _delay_ms(200);
         // lightDriverPtr_->disengageBrakeLight();
 
-        reverse(60);
+        reverse(50);
         break;
     case 6:
         // If reflex is 6, then do nothing but wait a bit so reflex doesn't get triggered twice
-        _delay_ms(300);
+        reverse(30, 5);
+        _delay_ms(50);
         break;
     case 7:
         // If reflex is 7, then drive with a speed of 70
         // lightDriverPtr_->engageBrakeLight();
-        reverse(0, 60);
+        reverse(0, 30);
         _delay_ms(300);
         // lightDriverPtr_->disengageBrakeLight();
 
