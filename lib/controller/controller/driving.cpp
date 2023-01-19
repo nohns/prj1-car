@@ -14,26 +14,30 @@ DrivingControl::DrivingControl(Motor *motorDriver, Sound *soundDriver, Light *li
 void DrivingControl::start()
 {
     lightDriverPtr_->turnOnHeadlight();
-    lightDriverPtr_->turnOnTaillight();
+    // lightDriverPtr_->turnOnTaillight();
 
     soundDriverPtr_->playSound(START_SOUND);
+    _delay_ms(2000);
 
     // Start with a speed of 70
-    drive(70);
+    drive(60);
 }
 
 void DrivingControl::handleReflex(unsigned char reflexNo)
 {
-    // On every reflex play sound
-    soundDriverPtr_->playSound(REFLEX_SOUND);
+    // On every reflex lower than the rest play sound
+    if (reflexNo < 11)
+    {
+        soundDriverPtr_->playSound(REFLEX_SOUND);
+    }
 
     SendString("Reflex no: ");
     SendInteger(reflexNo);
     SendChar('\n');
 
-    /*lightDriverPtr_->turnOnTaillight();
-    _delay_ms(50);
-    lightDriverPtr_->turnOffTaillight();*/
+    lightDriverPtr_->turnOnTaillight();
+    _delay_ms(60);
+    lightDriverPtr_->turnOffTaillight();
 
     // Alle steder der er kommentar til en command, er den originale kode.
     switch (reflexNo)
@@ -41,63 +45,63 @@ void DrivingControl::handleReflex(unsigned char reflexNo)
     case 0:
         // If reflex is 0, then do nothing but wait a bit so reflex doesn't get triggered twice
         _delay_ms(200);
+        drive(40, 5);
         break;
     case 1:
-        // If reflex is 1, then drive with a speed of 80 to drive up the ramp
-        _delay_ms(400);
-        drive(30);
+        // If reflex is 2, then slow down
+        drive(20, 10);
+        _delay_ms(175);
+        drive(70, 15);
+
         break;
     case 2:
-        // If reflex is 2, then slow down
-        drive(80);
-        break;
+        // If reflex is 3 then drive with a speed of 80 after the ramp
+        drive(0, 50);
+        //_delay_ms(50);
+        reverse(20, 20);
+        _delay_ms(1100);
+        drive(70);
     case 3:
         // If reflex is 3 then drive with a speed of 80 after the ramp
-        drive(0, 80);
-        _delay_ms(20);
-        reverse(60, 50);
-
-        _delay_ms(100);
-        drive(80);
+        drive(60);
+        _delay_ms(200);
+        break;
     case 4:
-        // If reflex is 3 then drive with a speed of 80 after the ramp
-        _delay_ms(300);
+        drive(60);
+        _delay_ms(100);
         break;
     case 5:
-        //_delay_ms(100);
-        drive(60);
+        // If reflex is 5, then brake and afterwards reverse with a speed of 70
+        // lightDriverPtr_->engageBrakeLight();
+        drive(0, 60);
+        _delay_ms(300);
+        // lightDriverPtr_->disengageBrakeLight();
+
+        reverse(60);
         break;
     case 6:
-        // If reflex is 5, then brake and afterwards reverse with a speed of 70
-        lightDriverPtr_->engageBrakeLight();
-        drive(0, 60);
-        _delay_ms(500);
-        lightDriverPtr_->disengageBrakeLight();
-
-        reverse(70);
-        break;
-    case 7:
         // If reflex is 6, then do nothing but wait a bit so reflex doesn't get triggered twice
         _delay_ms(300);
         break;
-    case 8:
+    case 7:
         // If reflex is 7, then drive with a speed of 70
-        lightDriverPtr_->engageBrakeLight();
-        reverse(0, 50);
-        _delay_ms(500);
-        lightDriverPtr_->disengageBrakeLight();
+        // lightDriverPtr_->engageBrakeLight();
+        reverse(0, 60);
+        _delay_ms(300);
+        // lightDriverPtr_->disengageBrakeLight();
 
         drive(70);
+
         break;
-    case 9:
+    case 8:
         // If reflex is 8, then do nothing but wait a bit so reflex doesn't get triggered twice
         _delay_ms(300);
         break;
-    case 10:
+    case 9:
         // If reflex is 9, then do nothing but wait a bit so reflex doesn't get triggered twice
-        _delay_ms(300);
+        _delay_ms(200);
         break;
-    case 11:
+    case 10:
         // If reflex is 10, then stop the car
         end();
         _delay_ms(1000);
@@ -116,14 +120,18 @@ void DrivingControl::end()
 {
     // Brake the car to a halt with braking lights
     lightDriverPtr_->engageBrakeLight();
-    drive(0);
+    drive(0, 80);
+    _delay_ms(100);
+    reverse(20, 0);
+    _delay_ms(100);
+    reverse(0);
     _delay_ms(500);
     lightDriverPtr_->disengageBrakeLight();
     lightDriverPtr_->turnOffHeadlight();
     lightDriverPtr_->turnOffTaillight();
 
     // Play end sound
-    _delay_ms(5000);
+    _delay_ms(1000);
     soundDriverPtr_->playSound(END_SOUND);
 }
 

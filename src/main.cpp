@@ -38,8 +38,6 @@ volatile unsigned int reflexesEncountered = 0;
 
 int main(void)
 {
-    InitUART(9600, 8);
-
     // Wait until start signal is given
     SendString("wait for start...\n");
     waitForStartPress();
@@ -110,6 +108,7 @@ ISR(INT3_vect)
 
 void onReflexEncountered()
 {
+    _delay_ms(100);
     disableExternalInterrupts();
 
     // Handling driving instructions

@@ -9,8 +9,9 @@
  *  for motor driver                   *
  * ----------------------------------- */
 
-#define MOTOR_ACCELERATION_PER_TICK 14 // Acceleration of 2 procent points every tick (one tick = 125ms)
-#define MOTOR_DECELERATION_PER_TICK 32 // Deceleration of 6 procent points of duty cycle every tick (one tick = 125ms)
+#define MOTOR_DEFAULT_ACCELERATION_TICK_MS 75
+#define MOTOR_ACCELERATION_PER_TICK 14 // Acceleration in procent points every tick
+#define MOTOR_DECELERATION_PER_TICK 32 // Deceleration in procent points of duty cycle every tick
 
 #define MOTOR_DIRECTION_DDR DDRH
 #define MOTOR_DIRECTION_PORT PORTH
@@ -20,18 +21,17 @@
  *  Motor driver logic                 *
  * ----------------------------------- */
 
-// Initialize motor driver. Requires PWM driver as dependency
+// Initialize motor driver
 Motor::Motor()
 {
     // Set direction pin to output
     MOTOR_DIRECTION_DDR |= (1 << MOTOR_DIRECTION_PIN);
 
     // Initialize PWM
-    // Mode = 3 (PWM, Phase Correct, 10 bit)
+    // Mode = 3 (PWM, Phase Correct, 10 bit), Prescaler = 64, (~120Hz)
     // Set OC1A on match down counting / Clear OC1A on match up counting
-    // Clock prescaler = 1
     TCCR4A = 0b10000011;
-    TCCR4B = 0b00000001;
+    TCCR4B = 0b00000011;
     writeDutyCycle(currentDutyCycle_);
 
     // Set PWM pin to output
@@ -39,7 +39,7 @@ Motor::Motor()
     PORTH &= ~(1 << PH3);
 }
 
-void Motor::accelerate(unsigned int toSpeed, unsigned char accelerationRate)
+void Motor::accelerate(unsigned char toSpeed, unsigned char accelerationRate)
 {
     // Make sure toSpeed is above the current speed and speed is less than 100
     if (readDutyCycle() >= toSpeed || toSpeed > 100)
@@ -47,13 +47,14 @@ void Motor::accelerate(unsigned int toSpeed, unsigned char accelerationRate)
         return;
     }
 
-    unsigned int finalSpeed = readDutyCycle();
+    unsigned char finalSpeed = readDutyCycle();
     SendString("Accelerating...\n");
     // initAccelerationTimer();
     while (finalSpeed < toSpeed)
     {
         // Increment speed
         finalSpeed += accelerationRate != 0 ? accelerationRate : MOTOR_ACCELERATION_PER_TICK;
+        // finalSpeed += (accelerationRate != 0 ? accelerationRate : MOTOR_ACCELERATION_PER_TICK) / 2;
         finalSpeed = finalSpeed > toSpeed ? toSpeed : finalSpeed;
         SendString("Writing new speed = ");
         SendInteger(finalSpeed);
@@ -62,13 +63,13 @@ void Motor::accelerate(unsigned int toSpeed, unsigned char accelerationRate)
         // Update pwm duty cycle
         writeDutyCycle(finalSpeed);
 
-        _delay_ms(75);
+        _delay_ms(MOTOR_DEFAULT_ACCELERATION_TICK_MS);
     }
 
     // stopAccelerationTimer();
 }
 
-void Motor::decelerate(unsigned int toSpeed, unsigned char accelerationRate)
+void Motor::decelerate(unsigned char toSpeed, unsigned char accelerationRate)
 {
     // Make sure toSpeed is below the current speed or speed is less than 0
     if (readDutyCycle() <= toSpeed || toSpeed < 0)
@@ -78,12 +79,13 @@ void Motor::decelerate(unsigned int toSpeed, unsigned char accelerationRate)
 
     SendString("Decelerating...\n");
 
-    unsigned finalSpeed = readDutyCycle();
+    unsigned char finalSpeed = readDutyCycle();
     while (finalSpeed > toSpeed)
     {
 
         // Decrement speed
         unsigned char accelerationTickrate = accelerationRate != 0 ? accelerationRate : MOTOR_DECELERATION_PER_TICK;
+        // unsigned char accelerationTickrate = (accelerationRate != 0 ? accelerationRate : MOTOR_DECELERATION_PER_TICK) / 2;
         finalSpeed = finalSpeed < accelerationTickrate ? 0 : finalSpeed - accelerationTickrate;
 
         // Update pwm duty cycle
@@ -99,7 +101,7 @@ char Motor::getDirection()
     return readDirection();
 }
 
-unsigned int Motor::getSpeed()
+unsigned char Motor::getSpeed()
 {
     return readDutyCycle();
 }
@@ -109,7 +111,7 @@ void Motor::setDirection(char direction)
     writeDirection(direction);
 }
 
-unsigned int Motor::readDutyCycle()
+unsigned char Motor::readDutyCycle()
 {
     // If OCR register is 0 then avoid dividing by 0
     if (OCR4A == 0)
@@ -117,6 +119,7 @@ unsigned int Motor::readDutyCycle()
         return 0;
     }
     unsigned int dutyCycle = ((unsigned long)100 * OCR4A) / 1023;
+    // unsigned int dutyCycle = ((unsigned long)100 * OCR4A) / 511;
     SendString("Read dutyCycle = ");
     SendInteger(dutyCycle);
     SendString(" and OCR4A = ");
@@ -128,29 +131,32 @@ unsigned int Motor::readDutyCycle()
 
 void Motor::writeDirection(char direction)
 {
-    // Make sure direction is given
+    // Only change direction if motor is stopped
+    if (readDutyCycle() > 0)
+    {
+        return;
+    }
+
+    // Make sure valid direction is given
     if (direction != MOTOR_DIRECTION_FORWARD && direction != MOTOR_DIRECTION_BACKWARD)
     {
         return;
     }
 
-    // Only change direction if dutycycle is 0
-    if (readDutyCycle() == 0)
+    // Change direction
+    if (direction == MOTOR_DIRECTION_FORWARD)
     {
-        if (direction == MOTOR_DIRECTION_FORWARD)
-        {
-            // Set direction pin to low if direction is forward
-            MOTOR_DIRECTION_PORT &= ~(1 << MOTOR_DIRECTION_PIN);
-        }
-        else
-        {
-            // Set direction pin to high if direction is backward
-            MOTOR_DIRECTION_PORT |= (1 << MOTOR_DIRECTION_PIN);
-        }
+        // Set direction pin to low if direction is forward
+        MOTOR_DIRECTION_PORT &= ~(1 << MOTOR_DIRECTION_PIN);
+    }
+    else
+    {
+        // Set direction pin to high if direction is backward
+        MOTOR_DIRECTION_PORT |= (1 << MOTOR_DIRECTION_PIN);
     }
 }
 
-void Motor::writeDutyCycle(const unsigned int dutyCycle)
+void Motor::writeDutyCycle(const unsigned char dutyCycle)
 {
     // If duty cycle given is 0 then avoid dividing by 0
     SendString("OCR4A = ");
@@ -163,6 +169,7 @@ void Motor::writeDutyCycle(const unsigned int dutyCycle)
     }
 
     unsigned long dutyCycleLong = (unsigned long)1023 * dutyCycle;
+    // unsigned long dutyCycleLong = (unsigned long)511 * dutyCycle;
     OCR4A = dutyCycleLong / 100;
     SendInteger(OCR4A);
     SendChar('\n');
