@@ -21,8 +21,6 @@ public:
     void setDirection(char direction);
 
 private:
-    unsigned char currentDutyCycle_;
-
     void writeDirection(char direction);
     void writeDutyCycle(const unsigned char dutyCycle);
 

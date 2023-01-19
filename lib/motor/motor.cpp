@@ -32,7 +32,7 @@ Motor::Motor()
     // Set OC1A on match down counting / Clear OC1A on match up counting
     TCCR4A = 0b10000011;
     TCCR4B = 0b00000011;
-    writeDutyCycle(currentDutyCycle_);
+    writeDutyCycle(0);
 
     // Set PWM pin to output
     DDRH |= (1 << PH3);
